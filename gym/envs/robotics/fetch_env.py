@@ -109,13 +109,15 @@ class FetchEnv(robot_env.RobotEnv):
             achieved_goal = grip_pos.copy()
         else:
             achieved_goal = np.squeeze(object_pos.copy())
-        obs = np.concatenate([
-            grip_pos, object_pos.ravel(), object_rel_pos.ravel(), gripper_state, object_rot.ravel(),
-            object_velp.ravel(), object_velr.ravel(), grip_velp, gripper_vel,
-        ])
+        time = np.array([self.sim.get_state().time])
+        if time[0] == self.initial_state.time:
+            self.obs = np.concatenate([
+                grip_pos, object_pos.ravel(), object_rel_pos.ravel(), gripper_state, object_rot.ravel(),
+                object_velp.ravel(), object_velr.ravel(), grip_velp, gripper_vel, time,
+            ])
 
         return {
-            'observation': obs.copy(),
+            'observation': self.obs.copy(),
             'achieved_goal': achieved_goal.copy(),
             'desired_goal': self.goal.copy(),
         }

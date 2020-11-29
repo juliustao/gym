@@ -85,6 +85,8 @@ class FetchEnv(robot_env.RobotEnv):
         utils.mocap_set_action(self.sim, action)
 
     def _get_obs(self):
+        is_obs_real = False  # if False, use initial observation (without time)
+        is_time_real = True  # if False, concat to observation the initial time
         # positions
         grip_pos = self.sim.data.get_site_xpos('robot0:grip')
         dt = self.sim.nsubsteps * self.sim.model.opt.timestep
@@ -109,15 +111,28 @@ class FetchEnv(robot_env.RobotEnv):
             achieved_goal = grip_pos.copy()
         else:
             achieved_goal = np.squeeze(object_pos.copy())
-        time = np.array([self.sim.get_state().time])
-        if time[0] == self.initial_state.time:
-            self.obs = np.concatenate([
+
+        real_time = self.sim.get_state().time
+        init_time = self.initial_state.time
+        if real_time == init_time:
+            self.init_obs = np.concatenate([
                 grip_pos, object_pos.ravel(), object_rel_pos.ravel(), gripper_state, object_rot.ravel(),
-                object_velp.ravel(), object_velr.ravel(), grip_velp, gripper_vel, time,
+                object_velp.ravel(), object_velr.ravel(), grip_velp, gripper_vel,
             ])
+        if is_obs_real:
+            obs = np.concatenate([
+                grip_pos, object_pos.ravel(), object_rel_pos.ravel(), gripper_state, object_rot.ravel(),
+                object_velp.ravel(), object_velr.ravel(), grip_velp, gripper_vel,
+            ])
+        else:
+            obs = self.init_obs
+        if is_time_real:
+            obs = np.append(obs, real_time)
+        else:
+            obs = np.append(obs, init_time)
 
         return {
-            'observation': self.obs.copy(),
+            'observation': obs.copy(),
             'achieved_goal': achieved_goal.copy(),
             'desired_goal': self.goal.copy(),
         }

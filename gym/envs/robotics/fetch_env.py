@@ -85,8 +85,8 @@ class FetchEnv(robot_env.RobotEnv):
         utils.mocap_set_action(self.sim, action)
 
     def _get_obs(self):
-        is_obs_real = False  # if False, use initial observation (without time)
-        is_time_real = True  # if False, concat to observation the initial time
+        is_obs_real = True  # if False, use initial observation (without time)
+        is_time_real = False  # if False, concat to observation the initial time
         # positions
         grip_pos = self.sim.data.get_site_xpos('robot0:grip')
         dt = self.sim.nsubsteps * self.sim.model.opt.timestep
@@ -165,6 +165,9 @@ class FetchEnv(robot_env.RobotEnv):
             assert object_qpos.shape == (7,)
             object_qpos[:2] = object_xpos
             self.sim.data.set_joint_qpos('object0:joint', object_qpos)
+            # print(f"object_qpos: {object_qpos}")
+            # object_qpos = np.array([1.46804931, 7.60985087e-1, 4.24702091e-1, 1.00000000, -4.41224843e-8, 6.78807450e-8, -1.00909679e-15])
+            # self.sim.data.set_joint_qpos('object0:joint', object_qpos)
 
         self.sim.forward()
         return True
@@ -178,6 +181,8 @@ class FetchEnv(robot_env.RobotEnv):
                 goal[2] += self.np_random.uniform(0, 0.45)
         else:
             goal = self.initial_gripper_xpos[:3] + self.np_random.uniform(-0.15, 0.15, size=3)
+        # print(f"goal: {goal}")
+        # goal = np.array([1.25449463, 0.85026866, 0.42469975])
         return goal.copy()
 
     def _is_success(self, achieved_goal, desired_goal):
